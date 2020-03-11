@@ -12,6 +12,6 @@ corona.ui=(div=document.getElementById('coronaDiv'))=>{
     }
 }
 
-if(typeof(define)!=='undefined'){
+if(typeof(define)!='undefined'){
     define(corona)
 }
