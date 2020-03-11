@@ -1,4 +1,4 @@
-console.log('corona.js loaded')
+console.log('corona.js loaded');
 
 corona={}
 corona.ui=(div=document.getElementById('coronaDiv'))=>{
