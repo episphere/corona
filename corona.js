@@ -17,9 +17,49 @@ if(typeof(define)!='undefined'){
     define(corona)
 }
 
-corona.getDaily=async(day)=>{
-    let url=`https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_daily_reports/03-03-2020.csv`
-    return fetch('https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_daily_reports/03-03-2020.csv').then(response => response.text()).then(data => console.log(data));
+corona.getDaily=async(dayString=corona.formatDate(new Date(Date.now()-(24*60*60*1000))))=>{ // default will call with data string from previous day
+    let url=`https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_daily_reports/${dayString}.csv`
+    return await corona.getJSONdaily(url)
+}
+
+corona.getJSONdaily=async(url)=>{
+    let txt= await (await fetch(url)).text()
+    if(txt.slice(-1).match(/[\s\n]/)){
+        txt=txt.slice(0,-1)
+    }
+    txt=txt.replace('"Korea, South"','South Korea') // wrangling
+    let arr = txt.split(/\n/g).map(x=>x.split(','))
+    // create dataframe
+    let labels = arr[0]
+    let J={}
+    labels.forEach(L=>{
+        J[L]=[]
+    })
+    arr.slice(1).forEach((r,i)=>{
+        r.forEach((v,j)=>{
+            J[labels[j]][i]=v
+        })
+    })
+    // clean each variable
+    J["Last Update"]=J["Last Update"].map(v=>new Date(v))
+    labels.slice(3).forEach(L=>{
+        J[L]=J[L].map(v=>parseFloat(v))
+    })
+    return J
+}
+
+corona.formatDate=(x=new Date())=>{
+    var y = x.getFullYear().toString();
+    var m = (x.getMonth() + 1).toString();
+    var d = x.getDate().toString();
+    (d.length == 1) && (d = '0' + d);
+    (m.length == 1) && (m = '0' + m);
+    return `${m}-${d}-${y}`
+}
+
+
+if(typeof(define)!='undefined'){
+    define(corona)
 }
 
 
