@@ -1,6 +1,8 @@
 console.log('corona.js loaded');
 
-corona={}
+corona={
+    daily:{} // daily results cached here
+}
 corona.ui=(div=document.getElementById('coronaDiv'))=>{
     if(typeof(div)=='string'){
         div=document.getElementById(div)
@@ -19,7 +21,8 @@ if(typeof(define)!='undefined'){
 
 corona.getDaily=async(dayString=corona.formatDate(new Date(Date.now()-(24*60*60*1000))))=>{ // default will call with data string from previous day
     let url=`https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_daily_reports/${dayString}.csv`
-    return await corona.getJSONdaily(url)
+    corona.daily[dayString]=await corona.getJSONdaily(url)
+    return corona.daily[dayString]
 }
 
 corona.getJSONdaily=async(url)=>{
@@ -41,7 +44,7 @@ corona.getJSONdaily=async(url)=>{
         })
     })
     // clean each variable
-    J["Last Update"]=J["Last Update"].map(v=>new Date(v))
+    J["Last Update"]=J["Last Update"].map(v=>new Date(v)) // time
     labels.slice(3).forEach(L=>{
         J[L]=J[L].map(v=>parseFloat(v))
     })
