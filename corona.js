@@ -16,10 +16,6 @@ corona.ui=(div=document.getElementById('coronaDiv'))=>{
     }
 }
 
-if(typeof(define)!='undefined'){
-    define(corona)
-}
-
 corona.getDaily=async(dayString=corona.formatDate(new Date(Date.now()-(24*60*60*1000))))=>{ // default will call with data string from previous day
     let url=`https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_daily_reports/${dayString}.csv`
     corona.daily[dayString]=await corona.getJSONdaily(url)
@@ -73,7 +69,7 @@ corona.getSeries=async(status='Confirmed')=>{  // it cal also be "Deaths" and "R
         }
         return v
     }))
-    let labels = arr[0]
+    let labels = arr[0].map(L=>L.replace(/\s/g,''))
     arr.slice(1).forEach((r,i)=>{
         J[i]={}
         labels.forEach((L,j)=>{
@@ -84,12 +80,16 @@ corona.getSeries=async(status='Confirmed')=>{  // it cal also be "Deaths" and "R
     return J
 }
 
-//getCountrySeries=()
-
+corona.countrySeries=async(status="Confirmed",country="Portugal")=>{
+    let x = await corona.getSeries(status)
+    let c = x.filter(d=>d["Country/Region"]==country)[0]
+    return c  
+}
 
 if(typeof(define)!='undefined'){
     define(corona)
 }
+
 
 
 //https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_daily_reports/03-03-2020.csv
