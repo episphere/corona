@@ -51,6 +51,28 @@ corona.getJSONdaily=async(url)=>{
     return J
 }
 
+corona.getSeries=async(status='Confirmed')=>{  // it cal also be "Deaths" and "Recovered"
+    //let url = `https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_time_series/time_series_19-covid-${status}.csv`
+    let url=`https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_19-covid-${status}.csv`
+    //csse_covid_19_time_series/time_series_19-covid-Confirmed.csv
+    let txt = await (await fetch(url)).text()
+    let J=[] // json as an array of objects
+    let arr = txt.slice(0,-1).split(/\n/g).map((r,i)=>r.split(',').map((v,j)=>{
+        if(i>0&j>1){ // first row contains labels, an values of first two columns are strings
+            v=parseFloat(v)
+        }
+        return v
+    }))
+    let labels = arr[0]
+    arr.slice(1).forEach((r,i)=>{
+        J[i]={}
+        labels.forEach((L,j)=>{
+            J[i][L]=r[j]
+        })
+    })
+    return J
+}
+
 corona.formatDate=(x=new Date())=>{
     var y = x.getFullYear().toString();
     var m = (x.getMonth() + 1).toString();
