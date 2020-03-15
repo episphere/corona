@@ -1,7 +1,8 @@
 console.log('corona.js loaded');
 
 corona={
-    daily:{} // daily results cached here
+    daily:{}, // daily results cached here
+    series:{}
 }
 corona.ui=(div=document.getElementById('coronaDiv'))=>{
     if(typeof(div)=='string'){
@@ -51,6 +52,15 @@ corona.getJSONdaily=async(url)=>{
     return J
 }
 
+corona.formatDate=(x=new Date())=>{
+    var y = x.getFullYear().toString();
+    var m = (x.getMonth() + 1).toString();
+    var d = x.getDate().toString();
+    (d.length == 1) && (d = '0' + d);
+    (m.length == 1) && (m = '0' + m);
+    return `${m}-${d}-${y}`
+}
+
 corona.getSeries=async(status='Confirmed')=>{  // it cal also be "Deaths" and "Recovered"
     //let url = `https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_time_series/time_series_19-covid-${status}.csv`
     let url=`https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_19-covid-${status}.csv`
@@ -70,17 +80,11 @@ corona.getSeries=async(status='Confirmed')=>{  // it cal also be "Deaths" and "R
             J[i][L]=r[j]
         })
     })
+    corona.series[status]=J
     return J
 }
 
-corona.formatDate=(x=new Date())=>{
-    var y = x.getFullYear().toString();
-    var m = (x.getMonth() + 1).toString();
-    var d = x.getDate().toString();
-    (d.length == 1) && (d = '0' + d);
-    (m.length == 1) && (m = '0' + m);
-    return `${m}-${d}-${y}`
-}
+//getCountrySeries=()
 
 
 if(typeof(define)!='undefined'){
