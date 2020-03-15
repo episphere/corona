@@ -27,7 +27,8 @@ corona.getJSONdaily=async(url)=>{
     if(txt.slice(-1).match(/[\s\n]/)){
         txt=txt.slice(0,-1)
     }
-    txt=txt.replace('"Korea, South"','South Korea') // wrangling
+    //txt=txt.replace('"Korea, South"','South Korea') // wrangling
+    txt=txt.replace(/"([^"]+)\,([^"]+)"/g,'$1$2')
     let arr = txt.split(/\n/g).map(x=>x.split(','))
     // create dataframe
     let labels = arr[0]
@@ -37,7 +38,13 @@ corona.getJSONdaily=async(url)=>{
     })
     arr.slice(1).forEach((r,i)=>{
         r.forEach((v,j)=>{
-            J[labels[j]][i]=v
+            try{
+                J[labels[j]][i]=v
+            }catch(err){
+                r
+                //debugger
+            }
+            
         })
     })
     // clean each variable
@@ -62,6 +69,7 @@ corona.getSeries=async(status='Confirmed')=>{  // it cal also be "Deaths" and "R
     let url=`https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_19-covid-${status}.csv`
     //csse_covid_19_time_series/time_series_19-covid-Confirmed.csv
     let txt = await (await fetch(url)).text()
+    txt=txt.replace(/"([^"]+)\,([^"]+)"/g,'$1$2') // clean "," from "" variables
     let J=[] // json as an array of objects
     let arr = txt.slice(0,-1).split(/\n/g).map((r,i)=>r.split(',').map((v,j)=>{
         if(i>0&j>1){ // first row contains labels, an values of first two columns are strings
@@ -74,6 +82,17 @@ corona.getSeries=async(status='Confirmed')=>{  // it cal also be "Deaths" and "R
         J[i]={}
         labels.forEach((L,j)=>{
             J[i][L]=r[j]
+        })
+    })
+    // extract time series
+    Lseries=labels.filter(L=>L.match(/\w+\/\w+\/\w+/g))
+    J.forEach((Ji,i)=>{
+        J[i].timeSeries=[]
+        Lseries.forEach((L,j)=>{
+            J[i].timeSeries[j]={
+                time:L,
+                value:Ji[L]
+            }
         })
     })
     corona.series[status]=J
