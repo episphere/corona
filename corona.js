@@ -18,18 +18,32 @@ corona.ui=(div=document.getElementById('coronaDiv'))=>{
 
 corona.getDaily=async(dayString=corona.formatDate(new Date(Date.now()-(24*60*60*1000))))=>{ // default will call with data string from previous day
     let url=`https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_daily_reports/${dayString}.csv`
-    corona.daily[dayString]=await corona.getJSONdaily(url)
+    let JObj=await corona.getJSONdaily(url)
+    // reformat JSON as an array with the right types
+    corona.daily[dayString]=corona.Obj2Array(JObj)
     return corona.daily[dayString]
+}
+
+corona.Obj2Array=Obj=>{
+    let arr=[]
+    let labels=Object.keys(Obj)
+    Obj[labels[0]].forEach((_,i)=>{
+        arr[i]={}
+        labels.forEach((L,j)=>{
+            arr[i][L]=Obj[L][i]
+        })
+    })
+    return arr
 }
 
 corona.getJSONdaily=async(url)=>{
     let txt= await (await fetch(url)).text()
-    if(txt.slice(-1).match(/[\s\n]/)){
+    if(txt.slice(-1).match(/[\s\n]/)){ // remove trailing line
         txt=txt.slice(0,-1)
     }
     //txt=txt.replace('"Korea, South"','South Korea') // wrangling
-    txt=txt.replace(/"([^"]+)\,([^"]+)"/g,'$1$2')
-    let arr = txt.split(/\n/g).map(x=>x.split(','))
+    txt=txt.replace(/"([^"]+)\,([^"]+)[\n\r]*"/g,'$1$2')
+    let arr = txt.split(/[\n\r]+/g).map(x=>x.split(','))
     // create dataframe
     let labels = arr[0]
     let J={}
@@ -38,12 +52,12 @@ corona.getJSONdaily=async(url)=>{
     })
     arr.slice(1).forEach((r,i)=>{
         r.forEach((v,j)=>{
-            try{
+            //try{
                 J[labels[j]][i]=v
-            }catch(err){
-                r
+            //}catch(err){
+            //    r
                 //debugger
-            }
+            //}
             
         })
     })
