@@ -36,6 +36,65 @@ corona.Obj2Array=Obj=>{
     return arr
 }
 
+corona.agregateDaily=(by="Country/Region")=>{
+    // under development
+}
+
+corona.agregateSeries=async(xx,groupBy="Country/Region")=>{
+    xx = xx||await corona.getSeries(status)
+    // groups
+    let groups = [... new Set(xx.map(x=>x["Country/Region"]))].sort()
+    let gg={}
+    groups.forEach(g=>{gg[g]=[]})
+    xx.forEach(x=>{
+        gg[x[groupBy]].push(x)
+    })
+    // colapse each of the groups back into the array
+    yy=groups.map(g=>{
+        // colapse
+        // remove time object string
+        let avg=aa=>{
+            return aa.reduce((a,b)=>a+b)/aa.length
+        }
+        //if(gg[g].length>1){
+        let ts = []
+        gg[g].forEach((xi,i)=>{
+            ts[i]=[]
+            xi.timeSeries.forEach((xij,j)=>{
+                ts[i][j]=xij.value
+            })
+        })
+        // transpose
+        let tsT=ts[0].map(_=>[])
+        ts.forEach((ti,i)=>{
+            ti.forEach((tij,j)=>{
+                tsT[j][i]=tij
+            })
+        })
+        let sumCounts = tsT.map(x=>x.reduce((a,b)=>a+b)) // sum counts
+            //debugger
+            
+        //}
+
+        //debugger
+            
+        let xx = gg[g]
+        let x={
+            "Province/State":g,
+            "Country/Region":g,
+            "Lat":avg(xx.map(x=>x.Lat)),
+            "Long":avg(xx.map(x=>x.Long)),
+            timeSeries:xx[0].timeSeries.map((t,i)=>{
+                return {
+                    time:t.time,
+                    value:sumCounts[i]
+                }
+            })
+        }
+        return x
+    })
+}
+
 corona.getJSONdaily=async(url)=>{
     let txt= await (await fetch(url)).text()
     if(txt.slice(-1).match(/[\s\n]/)){ // remove trailing line
@@ -107,6 +166,7 @@ corona.getSeries=async(status='Confirmed')=>{  // it cal also be "Deaths" and "R
                 time:L,
                 value:Ji[L]
             }
+            delete J[i][L] // remove Lseries
         })
     })
     corona.series[status]=J
