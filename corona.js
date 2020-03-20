@@ -36,18 +36,20 @@ corona.Obj2Array=Obj=>{
     return arr
 }
 
-corona.agregateDaily=(by="Country/Region")=>{
-    // under development
-}
-
-corona.agregateSeries=async(xx,groupBy="Country/Region")=>{
-    xx = xx||await corona.getSeries(status)
+corona.agregateByCountry=async(xx)=>{
+    if(typeof(xx)=='string'){
+        status=xx
+        xx=false
+    }else{
+        status='Confirmed'
+    }
+    xx = xx||corona.series[status]||await corona.getSeries(status)
     // groups
     let groups = [... new Set(xx.map(x=>x["Country/Region"]))].sort()
     let gg={}
     groups.forEach(g=>{gg[g]=[]})
     xx.forEach(x=>{
-        gg[x[groupBy]].push(x)
+        gg[x["Country/Region"]].push(x)
     })
     // colapse each of the groups back into the array
     yy=groups.map(g=>{
@@ -93,6 +95,7 @@ corona.agregateSeries=async(xx,groupBy="Country/Region")=>{
         }
         return x
     })
+    return yy
 }
 
 corona.getJSONdaily=async(url)=>{
@@ -177,6 +180,30 @@ corona.countrySeries=async(status="Confirmed",country="Portugal")=>{
     let x = await corona.getSeries(status)
     let c = x.filter(d=>d["Country/Region"]==country)[0]
     return c  
+}
+
+corona.road2recovery=async()=>{
+    let countries = {};
+    let confirmedByCountry = await corona.agregateByCountry('Confirmed');
+    let deathsByCountry = await corona.agregateByCountry('Deaths');
+    let recoveredByCountry = await corona.agregateByCountry('Recovered');
+    confirmedByCountry.forEach((x, i) => {
+        let c = x["Country/Region"];
+        countries[c] = {};
+        countries[c].Lat = x.Lat;
+        countries[c].Long = x.Long;
+        countries[c].times = x.timeSeries.map(ts => ts.time);
+        countries[c].confirmed = x.timeSeries.map(ts => ts.value);
+        countries[c].deaths = deathsByCountry[i].timeSeries.map(ts => ts.value);
+        countries[c].recovered = recoveredByCountry[i].timeSeries.map(
+          ts => ts.value
+        );
+        countries[c].active = countries[c].confirmed.map((cf, j) => {
+          // calculate active cases
+          return cf - (countries[c].recovered[j] + countries[c].deaths[j]);
+        });
+    });
+    return countries
 }
 
 if(typeof(define)!='undefined'){
