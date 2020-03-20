@@ -182,7 +182,7 @@ corona.countrySeries=async(status="Confirmed",country="Portugal")=>{
     return c  
 }
 
-corona.road2recovery=async()=>{
+corona.progression=async()=>{
     let countries = {};
     let confirmedByCountry = await corona.agregateByCountry('Confirmed');
     let deathsByCountry = await corona.agregateByCountry('Deaths');
