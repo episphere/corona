@@ -206,6 +206,47 @@ corona.progression=async()=>{
     return countries
 }
 
+corona.rotate3D=(div)=>{ //rotates 3d plotly graph
+    if(typeof(Plotly)=='object'){
+        function run() {
+          rotate('scene', Math.PI / 180);
+          //rotate('scene2', -Math.PI / 180);
+          requestAnimationFrame(run);
+        } 
+        run();
+
+        function rotate(id, angle) {
+          var eye0 = div.layout[id].camera.eye
+          var rtz = xyz2rtz(eye0);
+          rtz.t += angle;
+
+          var eye1 = rtz2xyz(rtz);
+          Plotly.relayout(div, id + '.camera.eye', eye1)
+        }
+
+        function xyz2rtz(xyz) {
+          return {
+            r: Math.sqrt(xyz.x * xyz.x + xyz.y * xyz.y),
+            t: Math.atan2(xyz.y, xyz.x),
+            z: xyz.z
+          };
+        }
+
+        function rtz2xyz(rtz) {
+          return {
+            x: rtz.r * Math.cos(rtz.t),
+            y: rtz.r * Math.sin(rtz.t),
+            z: rtz.z
+          };
+        }
+    }else{
+        import('https://cdn.plot.ly/plotly-latest.min.js').then(s=>{
+            Plotly=s
+            corona.rotate3D(div)
+        })
+    }
+}
+
 if(typeof(define)!='undefined'){
     define(corona)
 }
