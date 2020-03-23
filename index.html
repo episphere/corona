@@ -8,19 +8,19 @@
     <h1><span style="font-family:fantasy">Corona</span> <span style="font-size:small;color:blue">[<a href="https://github.com/episphere/corona" target="_blank">code</a>] [<a href="https://github.com/episphere/corona/issues" target="_blank">issues</a>] [<a href="https://observablehq.com/@episphere/corona" target="_blank" style="font-size:x-large;color:red;background-color:yellow">demo</a>]<span></h1>
     <p style="color:maroon">Exploring realtime interactive visualization, using COVID-19 data</p>
     <hr>
+    <h2>Summary</h2>
     <p>
-    This is not a tool designed to inform the epidemiology of corona virus. 
-    It is primarity an exploration of visualizing realtime epidemiology data.
-    Specifically, the visualization library is developed to support applications 
+    A <a href="https://episphere.github.io/corona/corona.js" target="_blank">data retrieval and visualization library</a> was developed to support applications 
     in a variety of forms, from regular web pages like this one to nodejs FaaS (server-side),
-    and including literate programming in <a href="https://observablehq.com/@episphere/corona" target="_blank">observable notebooks</a>.
-    </p>
-    The primary source of data is the one kept updated in github (see Data below), originally reported in</p>
-    <p><i style="color:green">Dong, Ensheng, et al. “An Interactive Web-Based Dashboard to Track COVID-19 in Real Time.” The Lancet Infectious Diseases, Feb. 2020, doi:10.1016/S1473-3099(20)30120-1 [<a href="https://www.sciencedirect.com/science/article/pii/S1473309920301201?via%3Dihub" target="_blank">PMID32087114</a>]</i>.
-
-    <p>
+    and including literate programming in <a href="https://observablehq.com/@episphere/corona" target="_blank">observable notebooks</a>. 
+    The data is retrieved in real-time using a "url-api" approach that exposes client side data wrangling as methods of a glocal corona object.
+    For live tools and discussion of the web-api approach click on "Demo" above.
     </p>
     <h2>Data</h2>
+    <p>
+    The primary source of data is the one kept updated in github (see Data below), originally reported in
+    </p>
+    <p><i style="color:green">Dong, Ensheng, et al. “An Interactive Web-Based Dashboard to Track COVID-19 in Real Time.” The Lancet Infectious Diseases, Feb. 2020, doi:10.1016/S1473-3099(20)30120-1 [<a href="https://www.sciencedirect.com/science/article/pii/S1473309920301201?via%3Dihub" target="_blank">PMID32087114</a>]</i>.
     <p>
     The source data is compiled by Johns Hopkins Whitting School of Engineering,
     <a href="https://systems.jhu.edu/research/public-health/ncov">Center for Systems Science and Engineering</a> at <a href="https://github.com/CSSEGISandData/COVID-19" target="_blank">github.com/CSSEGISandData/COVID-19</a>
@@ -47,9 +47,9 @@
     </p>
     <h2>Observable Notebook</h2>
     <p>
-    Development expedience and communication are on oposite plates of the scale when it comes to visualization of real-time data.
-    A balance is found in the use of literate programming. perferebly with no server-side dependency, as is the case of Observable Notebooks.
-    Note that this notebook loads the same js library that would be required in nodejs (server-side) of script tag loading into a web page or webApp:
+    Development expedience, and communication, are on oposite plates of the scale when it comes to visualization of real-time data.
+    A balance is attenpted using literate programming, with no server-side dependency, with Observable Notebooks.
+    That is, this notebook loads the same js library that would be required in nodejs (server-side) or script tag loading into a web page:
     </p>
     <p>
     <a href="https://observablehq.com/@episphere/corona" target="_blank">observablehq.com/@episphere/corona</a>

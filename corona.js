@@ -143,6 +143,24 @@ corona.formatDate=(x=new Date())=>{
 corona.getSeries=async(status='Confirmed')=>{  // it cal also be "Deaths" and "Recovered"
     //let url = `https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_time_series/time_series_19-covid-${status}.csv`
     let url=`https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_19-covid-${status}.csv`
+    /*
+    if(typeof(localforage)!='object'){
+        let s = document.createElement('script')
+        s.src='https://cdnjs.cloudflare.com/ajax/libs/localforage/1.7.3/localforage.min.js'
+        s.onload=function(){return corona.getSeries(status)}
+        document.head.appendChild(s)
+    }else{
+        let cache = false
+        if(localStorage[url]){
+            if(Date.now()-JSON.parse(localStorage[url])<3600000){
+                let J = await localforage.getItem(url)
+                cache=true
+            }
+        }
+        let JF = await localforage.getItem('lala')
+
+    }
+    */
     //csse_covid_19_time_series/time_series_19-covid-Confirmed.csv
     let txt = await (await fetch(url)).text()
     txt=txt.replace(/"([^"]+)\,([^"]+)"/g,'$1$2') // clean "," from "" variables
@@ -240,10 +258,10 @@ corona.rotate3D=(div)=>{ //rotates 3d plotly graph
           };
         }
     }else{
-        import('https://cdn.plot.ly/plotly-latest.min.js').then(s=>{
-            Plotly=s
-            corona.rotate3D(div)
-        })
+        let s = document.createElement('script')
+        s.src='https://cdn.plot.ly/plotly-latest.min.js'
+        s.onload=function(){corona.rotate3D(div)}
+        document.head.appendChild(s)
     }
 }
 
