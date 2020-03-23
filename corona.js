@@ -11,7 +11,16 @@ corona.ui=(div=document.getElementById('coronaDiv'))=>{
     if(typeof(div)!='object'){
         warning('div not found')
     }else{
-        div.innerHTML='cororaDiv here ...'
+        div.innerHTML=`
+        <h1><span style="font-family:fantasy">Corona </span><sup style="font-size:medium;color:green">COVID-19</sup> <span style="font-size:small;color:blue">[<a href="https://github.com/episphere/corona" target="_blank">code</a>] [<a href="https://github.com/episphere/corona/issues" target="_blank">issues</a>] [<a href="https://observablehq.com/@episphere/corona" target="_blank" style="font-size:x-large;color:red;background-color:yellow">demo</a>]<span></h1>
+        <h3>Selected figures</h3>
+        <p>
+        <ol>
+        <li> <a href="lag.html" target="_blank" style="font-weight:bold;color:green">Reporting Lag</a> - dates of latest reports from all regions.</li>
+        </ol>
+        </p>
+
+        `
         corona.div=div
     }
 }
@@ -263,6 +272,87 @@ corona.rotate3D=(div)=>{ //rotates 3d plotly graph
         s.onload=function(){corona.rotate3D(div)}
         document.head.appendChild(s)
     }
+}
+
+// selected figures
+
+corona.lagPlot=async (div='coronaLagDiv',maxCountries=20)=>{
+    console.log('ploting reporting lags')
+    if(typeof(div)=='string'){
+        div=document.getElementById(div)
+    }
+    if(!div){error(`element with id "${div}" not found`)}
+    let dailyUpdate=await corona.getDaily()
+    let xx = dailyUpdate;
+    let t = dailyUpdate.map(x => x["Last Update"]);
+    let traceCountry = (country, legend,clr) => {
+        let xx = dailyUpdate.filter(x => x["Country/Region"] == country);
+        let confirmed = xx.map(x => x.Confirmed);
+        let text = xx.map(x => {
+          if (x["Country/Region"].length < 2) {
+            return x["Country/Region"];
+          } else if (x["Province/State"].length > 1) {
+            return x["Province/State"];
+          } else {
+            return x["Country/Region"];
+          }
+        });
+        let traceConfirmed = {
+          name: legend||country,
+          x: t,
+          y: confirmed,
+          text: text,
+          mode: 'markers+text',
+          textposition: 'right',
+          textfont: {
+            size: 8,
+            color: 'gray',
+            orientation: 30
+          },
+          type: 'scatter',
+          marker: {
+            color: clr,
+            size: 6
+          }
+        };
+        return traceConfirmed;
+    };
+
+    // get list of countries with more than minDeath
+
+    let cc = await corona.agregateByCountry('Deaths')
+    //cc = cc.filter(c=>c.timeSeries.slice(-1)[0].value>=minDeath).sort(function(a,b){
+    cc = cc.sort(function(a,b){ // sort by Deaths
+        if(a.timeSeries.slice(-1)[0].value>b.timeSeries.slice(-1)[0].value){
+            return -1
+        }else{
+            return 1
+        }
+    })
+    let ccNames = cc.slice(0,maxCountries).map(c=>c["Country/Region"])
+    // put selected countries first
+
+
+    
+    let data=ccNames.map((cn,i)=>{
+        return traceCountry(cn,`${cn} (${cc[i].timeSeries.slice(-1)[0].value})`)
+    })
+    Plotly.newPlot(div, data, {
+    title: `<span style="font-size:medium;color:maroon">Latest data updates (real time) from countries with highest letal count</span>`,
+    autosize: false,
+    //width: "100%",
+    height:1000,
+    yaxis: {
+      title: 'Confirmed cases',
+      type: 'log',
+      autorange: true
+    },
+    xaxis: {
+      title: 'Last update'
+    }
+    });
+    //debugger
+
 }
 
 if(typeof(define)!='undefined'){
