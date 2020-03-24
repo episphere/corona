@@ -12,11 +12,13 @@ corona.ui=(div=document.getElementById('coronaDiv'))=>{
         warning('div not found')
     }else{
         div.innerHTML=`
-        <h1><span style="font-family:fantasy">Corona </span><sup style="font-size:medium;color:green">COVID-19</sup> <span style="font-size:small;color:blue">[<a href="https://github.com/episphere/corona" target="_blank">code</a>] [<a href="https://github.com/episphere/corona/issues" target="_blank">issues</a>] [<a href="https://observablehq.com/@episphere/corona" target="_blank" style="font-size:x-large;color:red;background-color:yellow">demo</a>]<span></h1>
-        <h3>Selected figures</h3>
+        <h1><span style="font-family:fantasy">Corona </span><sup style="font-size:medium;color:green">COVID-19</sup> <span style="font-size:small;color:blue">[<a href="https://github.com/episphere/corona" target="_blank">code</a>] [<a href="https://github.com/episphere/corona/issues" target="_blank">issues</a>] [<a href="https://observablehq.com/@episphere/corona" target="_blank" style="font-size:large">demo</a>] [<a href="index.html">.io</a>]<span></h1>
+        <h3>Selected real-time figures</h3>
         <p>
         <ol>
-        <li> <a href="lag.html" target="_blank" style="font-weight:bold;color:green">Reporting Lag</a> - dates of latest reports from all regions.</li>
+        <li> <a href="lag.html" target="_blank" style="font-weight:bold;">Reporting Lag</a> - dates of latest reports from all regions.</li>
+        <li> <a href="lagUS.html" target="_blank" style="font-weight:bold;">Reporting Lag for US states</a> - dates of latest reports from all states.</li>
+        <li> <a href="lagUS.html" target="_blank" style="font-weight:bold;">Raw data trajectories</a> - confirmed, recovery and deaths raw counts in 3D.</li>
         </ol>
         </p>
 
@@ -113,7 +115,8 @@ corona.getJSONdaily=async(url)=>{
         txt=txt.slice(0,-1)
     }
     //txt=txt.replace('"Korea, South"','South Korea') // wrangling
-    txt=txt.replace(/"([^"]+)\,([^"]+)[\n\r]*"/g,'$1$2')
+    //txt=txt.replace(/"([^"]+)\,([^"]+)[\n\r]*"/g,'$1$2')
+    txt=txt.replace(/\"[^"]+"/g,encodeURIComponent)
     let arr = txt.split(/[\n\r]+/g).map(x=>x.split(','))
     // create dataframe
     let labels = arr[0]
@@ -133,10 +136,12 @@ corona.getJSONdaily=async(url)=>{
         })
     })
     // clean each variable
-    J["Last Update"]=J["Last Update"].map(v=>new Date(v)) // time
-    labels.slice(3).forEach(L=>{
+    J["Last_Update"]=J["Last_Update"].map(v=>Date(v)); // time
+    let LL=['Confirmed','Deaths','Recovered','Active']
+    LL.forEach(L=>{
+        console.log(L)
         J[L]=J[L].map(v=>parseFloat(v))
-    })
+    });
     return J
 }
 
@@ -335,13 +340,13 @@ corona.lagPlot=async (div='coronaLagDiv',maxCountries=20)=>{
 
     
     let data=ccNames.map((cn,i)=>{
-        return traceCountry(cn,`${cn} (${cc[i].timeSeries.slice(-1)[0].value})`)
+        return traceCountry(cn,`${i+1}. ${cn} (${cc[i].timeSeries.slice(-1)[0].value})`)
     })
     Plotly.newPlot(div, data, {
     title: `<span style="font-size:medium;color:maroon">Latest data updates (real time) from countries with highest letal count</span>`,
     autosize: false,
-    //width: "100%",
-    height:1000,
+    width: div.parentElement.clientWidth*0.8,
+    height:div.parentElement.clientHeight*0.8,
     yaxis: {
       title: 'Confirmed cases',
       type: 'log',
@@ -351,8 +356,70 @@ corona.lagPlot=async (div='coronaLagDiv',maxCountries=20)=>{
       title: 'Last update'
     }
     });
-    //debugger
+}
 
+corona.lagPlotCountry=async (div='coronaLagDiv',country='US')=>{
+    console.log('ploting reporting lags')
+    if(typeof(div)=='string'){
+        div=document.getElementById(div)
+    }
+    if(!div){error(`element with id "${div}" not found`)}
+    let dailyUpdate=await corona.getDaily()
+    let xx = dailyUpdate;
+    let t = dailyUpdate.map(x => x["Last Update"]);
+    let traceCountry = (country, legend,clr) => {
+        let xx = dailyUpdate.filter(x => x["Country/Region"] == country);
+        let confirmed = xx.map(x => x.Confirmed);
+        let deaths = xx.map(x => x.Deaths);
+        let text = xx.map(x => {
+          if (x["Country/Region"].length < 2) {
+            return x["Country/Region"];
+          } else if (x["Province/State"].length > 1) {
+            return x["Province/State"];
+          } else {
+            return x["Country/Region"];
+          }
+        });
+        let maxDeath=deaths.reduce((a,b)=>Math.max(a,b))
+        let traceConfirmed = {
+          name: legend||country,
+          x: t,
+          y: confirmed,
+          text: text.map((x,i)=>`${x}<br>(${deaths[i]})`),
+          mode: 'markers+text',
+          textposition: 'left',
+          textfont: {
+            size: 8,
+            color: 'gray',
+            orientation: 30
+          },
+          type: 'scatter',
+          marker: {
+            color: clr,
+            size: deaths.map(x=>100*x/maxDeath+4)
+          }
+        };
+        return traceConfirmed;
+    };
+    
+    let data=[traceCountry(country)]
+    
+    Plotly.newPlot(div, data, {
+    //title: `<span style="font-size:medium;color:maroon">Latest data updates (real time)</span>`,
+    title: '<span style="font-size:medium;color:maroon">marker size proportional to letal count</span>',
+    autosize: false,
+    //width: div.parentElement.clientWidth*0.8,
+    width: 500,
+    height:div.parentElement.clientHeight*0.8,
+    yaxis: {
+      title: 'Confirmed cases',
+      type: 'log',
+      autorange: true
+    },
+    xaxis: {
+      title: 'Last update'
+    }
+    });
 }
 
 if(typeof(define)!='undefined'){

@@ -1,4 +1,3 @@
-<html>
 <head>
     <script src='corona.js'></script>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css">
@@ -6,9 +5,8 @@
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
     <link href="corona.css" rel="stylesheet">
 </head>
-<body class="container" onload="corona.lagPlot('coronaLagDiv',30)">
+<body class="container" onload="corona.lagPlotCountry('coronaLagDiv','US')">
     <h1><span style="font-family:fantasy">Corona </span><sup style="font-size:medium;color:green">COVID-19</sup> <span style="font-size:small;color:blue">[<a href="https://github.com/episphere/corona" target="_blank">code</a>] [<a href="https://github.com/episphere/corona/issues" target="_blank">issues</a>] [<a href="https://observablehq.com/@episphere/corona" target="_blank" style="font-size:large;">doc</a>] [<a href="https://episphere.github.io/corona" target="_blank">.io</a>]<span></h1>
-    <p><b>Reporting Lag</b> - Dates of last report from all regions</p>    
+    <p><b>Reporting Lag US</b> - Dates of last report from all US States</p>    
     <div id="coronaLagDiv"></div>
 </body>
-</html>
