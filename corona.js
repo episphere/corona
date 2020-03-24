@@ -289,17 +289,17 @@ corona.lagPlot=async (div='coronaLagDiv',maxCountries=20)=>{
     if(!div){error(`element with id "${div}" not found`)}
     let dailyUpdate=await corona.getDaily()
     let xx = dailyUpdate;
-    let t = dailyUpdate.map(x => x["Last Update"]);
+    let t = dailyUpdate.map(x => x["Last_Update"]);
     let traceCountry = (country, legend,clr) => {
-        let xx = dailyUpdate.filter(x => x["Country/Region"] == country);
+        let xx = dailyUpdate.filter(x => x["Country_Region"] == country);
         let confirmed = xx.map(x => x.Confirmed);
         let text = xx.map(x => {
-          if (x["Country/Region"].length < 2) {
-            return x["Country/Region"];
-          } else if (x["Province/State"].length > 1) {
-            return x["Province/State"];
+          if (x["Country_Region"].length < 2) {
+            return x["Country_Region"];
+          } else if (x["Province_State"].length > 1) {
+            return x["Province_State"];
           } else {
-            return x["Country/Region"];
+            return x["Country_Region"];
           }
         });
         let traceConfirmed = {
@@ -366,18 +366,18 @@ corona.lagPlotCountry=async (div='coronaLagDiv',country='US')=>{
     if(!div){error(`element with id "${div}" not found`)}
     let dailyUpdate=await corona.getDaily()
     let xx = dailyUpdate;
-    let t = dailyUpdate.map(x => x["Last Update"]);
+    let t = dailyUpdate.map(x => x["Last_Update"]);
     let traceCountry = (country, legend,clr) => {
-        let xx = dailyUpdate.filter(x => x["Country/Region"] == country);
+        let xx = dailyUpdate.filter(x => x["Country_Region"] == country);
         let confirmed = xx.map(x => x.Confirmed);
         let deaths = xx.map(x => x.Deaths);
         let text = xx.map(x => {
-          if (x["Country/Region"].length < 2) {
-            return x["Country/Region"];
-          } else if (x["Province/State"].length > 1) {
-            return x["Province/State"];
+          if (x["Country_Region"].length < 2) {
+            return x["Country_Region"];
+          } else if (x["Province_State"].length > 1) {
+            return x["Province_State"];
           } else {
-            return x["Country/Region"];
+            return x["Country_Region"];
           }
         });
         let maxDeath=deaths.reduce((a,b)=>Math.max(a,b))
@@ -406,7 +406,7 @@ corona.lagPlotCountry=async (div='coronaLagDiv',country='US')=>{
     
     Plotly.newPlot(div, data, {
     //title: `<span style="font-size:medium;color:maroon">Latest data updates (real time)</span>`,
-    title: '<span style="font-size:medium;color:maroon">marker size proportional to letal count</span>',
+    title: '<span style="font-size:medium;color:maroon">Marker size proportional to letal count <br><span style="font-size:x-small;color:green">(updated sources will be lined up in daily vertical, outdated reports will trail to the left)</span></span>',
     autosize: false,
     //width: div.parentElement.clientWidth*0.8,
     width: 500,
