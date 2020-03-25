@@ -1,6 +1,6 @@
 console.log('corona.js loaded');
 
-corona={
+var corona={
     daily:{}, // daily results cached here
     series:{}
 }
@@ -455,6 +455,22 @@ corona.lagPlotCountry=async (div='coronaLagDiv',country='US')=>{
     }
     });
 }
+
+corona.plotly=(div,data=[{x:[1,2,3,4,5,6]}],layout={})=>{
+    if(typeof(div)=='string'){
+        div = document.getElementById(div)
+    }
+    if(!div){
+        div = document.createElement('div')
+    }
+    Plotly.plot(div, [data],layout)
+}
+
+corona.plotlyDataTest=()=>{
+    return [{x:[1,2,3,4,5,6]}]
+}
+
+
 
 if(typeof(define)!='undefined'){
     define(corona)
