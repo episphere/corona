@@ -18,7 +18,7 @@ corona.ui=(div=document.getElementById('coronaDiv'))=>{
         <ol>
         <li> <a href="lag.html" target="_blank" style="font-weight:bold;">Reporting Lag</a> - dates of latest reports from all regions.</li>
         <li> <a href="lagUS.html" target="_blank" style="font-weight:bold;">Reporting Lag for US states</a> - dates of latest reports from all states.</li>
-        <li> <a href="lagUS.html" target="_blank" style="font-weight:bold;">Raw data trajectories</a> - confirmed, recovery and deaths raw counts in 3D.</li>
+        <li> <a href="trajectory.html" target="_blank" style="font-weight:bold;">Raw data trajectories</a> - confirmed, recovery and deaths raw counts in 3D.</li>
         </ol>
         </p>
 
@@ -139,7 +139,7 @@ corona.getJSONdaily=async(url)=>{
     J["Last_Update"]=J["Last_Update"].map(v=>Date(v)); // time
     let LL=['Confirmed','Deaths','Recovered','Active']
     LL.forEach(L=>{
-        console.log(L)
+        //console.log(L)
         J[L]=J[L].map(v=>parseFloat(v))
     });
     return J
@@ -176,6 +176,40 @@ corona.getSeries=async(status='Confirmed')=>{  // it cal also be "Deaths" and "R
     }
     */
     //csse_covid_19_time_series/time_series_19-covid-Confirmed.csv
+    let txt = await (await fetch(url)).text()
+    txt=txt.replace(/"([^"]+)\,([^"]+)"/g,'$1$2') // clean "," from "" variables
+    let J=[] // json as an array of objects
+    let arr = txt.slice(0,-1).split(/\n/g).map((r,i)=>r.split(',').map((v,j)=>{
+        if(i>0&j>1){ // first row contains labels, an values of first two columns are strings
+            v=parseFloat(v)
+        }
+        return v
+    }))
+    let labels = arr[0].map(L=>L.replace(/\s/g,''))
+    arr.slice(1).forEach((r,i)=>{
+        J[i]={}
+        labels.forEach((L,j)=>{
+            J[i][L]=r[j]
+        })
+    })
+    // extract time series
+    Lseries=labels.filter(L=>L.match(/\w+\/\w+\/\w+/g))
+    J.forEach((Ji,i)=>{
+        J[i].timeSeries=[]
+        Lseries.forEach((L,j)=>{
+            J[i].timeSeries[j]={
+                time:L,
+                value:Ji[L]
+            }
+            delete J[i][L] // remove Lseries
+        })
+    })
+    corona.series[status]=J
+    return J
+}
+
+corona.getGlobalSeries=async(status='confirmed')=>{  // it cal also be "Deaths" and "Recovered"
+    let url=`https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_${status}_global.csv`
     let txt = await (await fetch(url)).text()
     txt=txt.replace(/"([^"]+)\,([^"]+)"/g,'$1$2') // clean "," from "" variables
     let J=[] // json as an array of objects
