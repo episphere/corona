@@ -1,6 +1,6 @@
 console.log('corona.js loaded');
 
-var corona={
+window.corona={
     daily:{}, // daily results cached here
     series:{}
 }
