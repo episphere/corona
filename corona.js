@@ -1,6 +1,6 @@
 console.log('corona.js loaded');
 
-window.corona={
+corona={
     daily:{}, // daily results cached here
     series:{}
 }
@@ -54,7 +54,7 @@ corona.agregateByCountry=async(xx)=>{
     }else{
         status='Confirmed'
     }
-    xx = xx||corona.series[status]||await corona.getSeries(status)
+    xx = xx||corona.series[status]||await corona.getGlobalSeries(status)
     // groups
     let groups = [... new Set(xx.map(x=>x["Country/Region"]))].sort()
     let gg={}
@@ -250,16 +250,22 @@ corona.countrySeries=async(status="Confirmed",country="Portugal")=>{
 
 corona.progression=async()=>{
     let countries = {};
-    let confirmedByCountry = await corona.agregateByCountry('Confirmed');
-    let deathsByCountry = await corona.agregateByCountry('Deaths');
-    let recoveredByCountry = await corona.agregateByCountry('Recovered');
-    confirmedByCountry.forEach((x, i) => {
+    let confirmedByCountry = await corona.agregateByCountry('confirmed');
+    let deathsByCountry = await corona.agregateByCountry('deaths');
+    let recoveredByCountry = await corona.agregateByCountry('recovered');
+    // we can no longer be sure JHU will keep the three files in sync
+
+    debugger
+    recoveredByCountry.forEach((x, i) => {
         let c = x["Country/Region"];
+        if(c=='Italy'){
+            //debugger
+        }
         countries[c] = {};
         countries[c].Lat = x.Lat;
         countries[c].Long = x.Long;
         countries[c].times = x.timeSeries.map(ts => ts.time);
-        countries[c].confirmed = x.timeSeries.map(ts => ts.value);
+        countries[c].confirmed = confirmedByCountry[i].timeSeries.map(ts => ts.value);
         countries[c].deaths = deathsByCountry[i].timeSeries.map(ts => ts.value);
         countries[c].recovered = recoveredByCountry[i].timeSeries.map(
           ts => ts.value
@@ -466,8 +472,80 @@ corona.plotly=(div,data=[{x:[1,2,3,4,5,6]}],layout={})=>{
     Plotly.plot(div, [data],layout)
 }
 
-corona.plotlyDataTest=()=>{
-    return [{x:[1,2,3,4,5,6]}]
+corona.plotlyDataLayout=(data=[{x:[1,2,3,4,5,6]}],layout={})=>{
+    return [data,layout]
+}
+
+corona.plotlyInfectionMomentumByCountry=async(confirmed,deaths,minDeath=20)=>{
+    confirmed = confirmed || corona.series.confirmed || (await corona.getGlobalSeries('confirmed'))
+    deaths = deaths || corona.series.deaths || (await corona.getGlobalSeries('deaths'))
+    // aggregate by country
+    confirmed=await corona.agregateByCountry(confirmed)
+    deaths=await corona.agregateByCountry(deaths)
+    // organise byCountry
+    let countries = confirmed.map(c=>c["Country/Region"])
+    if(!corona.series.byCountry){
+        let cc={}
+        deaths.forEach(d=>{
+            cc[d["Country/Region"]]=d
+            cc[d["Country/Region"]].time=d.timeSeries.map(x=>new Date(x.time))
+            cc[d["Country/Region"]].death=d.timeSeries.map(x=>new Date(x.value))
+            delete cc[d["Country/Region"]].timeSeries
+        })
+        confirmed.forEach(d=>{
+            if(cc[d["Country/Region"]]){ // if there is data on deaths
+                cc[d["Country/Region"]].confirmed=d.timeSeries.map(x=>x.value)
+            }
+        })
+        corona.series.byCountry=cc
+    }
+    // sort by confirmed
+    let countryRank = Object.keys(corona.series.byCountry).sort(function(a,b){
+        if(corona.series.byCountry[a].confirmed.slice(-1)[0]<corona.series.byCountry[b].confirmed.slice(-1)[0]){
+            return 1
+        } else{
+            return -1
+        }
+    })
+    let trace=c=>{
+        let tr = {
+            name:c,
+            type: 'scatter',
+            mode: 'lines+markers',
+            x:corona.series.byCountry[c].deaths,
+            y:corona.series.byCountry[c].confirmed
+        }
+        return tr
+    }
+
+    layout={
+        xaxis:{
+            title:'deaths',
+            //type:'log',
+            //range:[1,3]
+        }
+    }
+
+    /*
+    layout={
+        xaxis: {
+        title: 'deaths',
+        type: 'log',
+        range: [1, 4]
+      },
+      yaxis: {
+        title: '# weekly cases as % of total'
+        //type: 'log'
+      },
+      title:
+        'Infection progression<br><span style="font-size:small">(move mouse-over series to see dates)</span>'
+    }
+    */
+
+    return {
+        data:countryRank.slice(0,3).map(c=>trace(c)),
+        layout:layout
+    }
 }
 
 
