@@ -251,32 +251,37 @@ corona.countrySeries=async(status="Confirmed",country="Portugal")=>{
 
 corona.progression=async()=>{
     let countries = {};
-    let confirmedByCountry = await corona.agregateByCountry('confirmed');
-    let deathsByCountry = await corona.agregateByCountry('deaths');
-    let recoveredByCountry = await corona.agregateByCountry('recovered');
+    let confirmedByCountry = corona.array2object(await corona.agregateByCountry('confirmed'));
+    let deathsByCountry = corona.array2object(await corona.agregateByCountry('deaths'));
+    let recoveredByCountry = corona.array2object(await corona.agregateByCountry('recovered'));
     // we can no longer be sure JHU will keep the three files in sync
-
-    debugger
-    recoveredByCountry.forEach((x, i) => {
-        let c = x["Country/Region"];
-        if(c=='Italy'){
-            //debugger
+    //let n = [confirmedByCountry.Italy.timeSeries.length,deathsByCountry.Italy.timeSeries.length,recoveredByCountry.Italy.timeSeries.length].reduce((a,b)=>Math.min(a,b))
+    let cc = [... new Set(Object.keys(confirmedByCountry).concat(Object.keys(deathsByCountry)).concat(Object.keys(recoveredByCountry)))]
+    //debugger
+    cc.forEach((c, i) => {
+        // make sure it exists for all three series
+        if(confirmedByCountry[c]&&deathsByCountry[c]&&recoveredByCountry[c]){
+            let n = [confirmedByCountry[c].timeSeries.length,deathsByCountry[c].timeSeries.length,recoveredByCountry[c].timeSeries.length].reduce((a,b)=>Math.min(a,b))
+            let x = confirmedByCountry[c]
+            countries[c]=x
+            countries[c].times = x.timeSeries.map(ts => ts.time).slice(0,n);
+            countries[c].confirmed = confirmedByCountry[c].timeSeries.map(ts => ts.value).slice(0,n)
+            countries[c].deaths = deathsByCountry[c].timeSeries.map(ts => ts.value).slice(0,n)
+            countries[c].recovered = recoveredByCountry[c].timeSeries.map(ts => ts.value).slice(0,n)
+            countries[c].active = countries[c].confirmed.map((cf, j) => {
+              return cf - (countries[c].recovered[j] + countries[c].deaths[j]);
+            })
         }
-        countries[c] = {};
-        countries[c].Lat = x.Lat;
-        countries[c].Long = x.Long;
-        countries[c].times = x.timeSeries.map(ts => ts.time);
-        countries[c].confirmed = confirmedByCountry[i].timeSeries.map(ts => ts.value);
-        countries[c].deaths = deathsByCountry[i].timeSeries.map(ts => ts.value);
-        countries[c].recovered = recoveredByCountry[i].timeSeries.map(
-          ts => ts.value
-        );
-        countries[c].active = countries[c].confirmed.map((cf, j) => {
-          // calculate active cases
-          return cf - (countries[c].recovered[j] + countries[c].deaths[j]);
-        });
     });
     return countries
+}
+
+corona.array2object=(xx,attr="Country/Region")=>{ // convert array to object
+    let obj={}
+    xx.forEach(x=>{
+        obj[x[attr]]=x
+    })
+    return obj
 }
 
 corona.rotate3D=(div)=>{ //rotates 3d plotly graph
@@ -366,7 +371,7 @@ corona.lagPlot=async (div='coronaLagDiv',maxCountries=20)=>{
 
     // get list of countries with more than minDeath
 
-    let cc = await corona.agregateByCountry('Deaths')
+    let cc = await corona.agregateByCountry('deaths')
     //cc = cc.filter(c=>c.timeSeries.slice(-1)[0].value>=minDeath).sort(function(a,b){
     cc = cc.sort(function(a,b){ // sort by Deaths
         if(a.timeSeries.slice(-1)[0].value>b.timeSeries.slice(-1)[0].value){
