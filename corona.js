@@ -276,6 +276,99 @@ corona.progression=async()=>{
     return countries
 }
 
+corona.getUSA=async()=>{
+    // deaths
+    let urlDeaths=`https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_deaths_US.csv`
+    let txt = await (await fetch(urlDeaths)).text()
+    txt=txt.replace(/\"[^"]+"/g,encodeURIComponent)
+    let arr = txt.split(/[\n\r]+/).map(r=>r.split(','))
+    if(arr.slice(-1).length==1){arr.pop()} // trailing blank line
+    let k = arr[0].indexOf('1/22/20')
+    let labels=arr[0].slice(0,k)
+    // confirmed
+    let urlConfirmed=`https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_confirmed_US.csv`
+    let txtConfirmed = await (await fetch(urlConfirmed)).text()
+    txtConfirmed=txtConfirmed.replace(/\"[^"]+"/g,encodeURIComponent)
+    let arrConfirmed = txtConfirmed.split(/[\n\r]+/).map(r=>r.split(','))
+    if(arrConfirmed.slice(-1).length==1){arrConfirmed.pop()} // trailing blank line
+    // make sure to have the same times in the two series
+    let kConfirmed = arrConfirmed[0].indexOf('1/22/20')
+    
+    //let times = arr[0].slice(0,Math.min(arr[0].length,arrConfirmed[0].length)).slice(k)
+    let times = arr[0].slice(k)
+    let arrObj={
+        dates:[],
+        deaths:[],
+        confirmed:[]
+    }
+    let dates=times.map(v=>new Date(v))
+    labels.forEach(L=>{arrObj[L]=[]})
+    arr.slice(1).forEach((r,i)=>{
+        labels.forEach((L,j)=>{
+            arrObj[L][i]=r[j]
+        })
+        arrObj.dates[i]=dates
+        arrObj.deaths[i]=r.slice(k).map(v=>parseFloat(v))        
+    })
+    arrConfirmed.slice(1).forEach((r,i)=>{
+        arrObj.confirmed[i]=r.slice(kConfirmed).map(v=>parseFloat(v))        
+    })
+
+    // parse numeric values
+    arrObj.Lat=arrObj.Lat.map(v=>parseFloat(v))
+    arrObj.Long_=arrObj.Long_.map(v=>parseFloat(v))
+    arrObj.Population=arrObj.Population.map(v=>parseFloat(v))
+    arrObj.Combined_Key=arrObj.Combined_Key.map(v=>JSON.parse(decodeURIComponent(v)))
+    // assemble series
+    let ArrLabels=Object.keys(arrObj)
+    let objArr=arrObj.UID.map((_,i)=>{
+        let y={}
+        ArrLabels.forEach(L=>{
+            y[L]=arrObj[L][i]
+        })
+        return y
+    })
+    return objArr
+}
+
+corona.byState=(xx)=>{ // could be xx = await corona.getUSA()
+    let stateNames = [...new Set(xx.map(x=>x['Province_State']))].sort()
+    let states={}
+    stateNames.forEach(S=>{
+        states[S]={
+            county:{}
+        }
+    })
+    stateNames.forEach(S=>{
+        states[S]={
+            county:{}
+        }
+    })
+    xx.forEach(x=>{
+        states[x.Province_State].county[x.Admin2]=x
+    })
+    // build states number from counties
+    Object.keys(states).forEach(S=>{
+        Object.keys(states[S].county).forEach(C=>{
+            if(!states[S].Population){
+                states[S].Population=states[S].county[C].Population
+                states[S].deaths=states[S].county[C].deaths
+                states[S].confirmed=states[S].county[C].confirmed
+                states[S].dates=states[S].county[C].dates
+            }else{
+                states[S].Population+=states[S].county[C].Population
+                states[S].deaths=states[S].deaths.map((v,i)=>{
+                    return v+states[S].county[C].deaths[i]
+                })
+                states[S].confirmed=states[S].confirmed.map((v,i)=>{
+                    return v+states[S].county[C].confirmed[i]
+                })
+            }
+        })
+    })
+    return states
+}
+
 corona.array2object=(xx,attr="Country/Region")=>{ // convert array to object
     let obj={}
     xx.forEach(x=>{
@@ -554,11 +647,79 @@ corona.plotlyInfectionMomentumByCountry=async(confirmed,deaths,minDeath=20)=>{
     }
 }
 
+corona.UStable=async (div='coronaUStableDiv')=>{
+    if(typeof(div)=='string'){
+        div=document.getElementById(div)
+    }
+    let states = corona.byState(await corona.getUSA())
+    let statesTotal={
+        Population:0,
+        confirmed:0,
+        deaths:0
+    }
+    Object.entries(states).map(x=>x[1]).forEach(S=>{
+        statesTotal.Population+=S.Population
+        statesTotal.confirmed+=S.confirmed.slice(-1)[0]
+        statesTotal.deaths+=S.deaths.slice(-1)[0]
+    })
+
+    // count all
+    //debugger
+    let h=`
+    <p>
+    Source data: <a href="https://github.com/CSSEGISandData/COVID-19" target="_blank">github.com/CSSEGISandData/COVID-19</a>, <br><code>Dong, Ensheng, et al. “An Interactive Web-Based Dashboard to Track COVID-19 in Real Time.” The Lancet Infectious Diseases, Feb. 2020, <a href="https://www.sciencedirect.com/science/article/pii/S1473309920301201" target="_blank">doi:10.1016/S1473-3099(20)30120-1</a> [<a href="https://www.ncbi.nlm.nih.gov/pubmed/32087114" target="_blank">PMID:32087114</a>].<br>\</code>
+    </p>
+    <p style="color:maroon">${new Date}<br><span style="color:navy">Population ${statesTotal.Population}, with ${statesTotal.confirmed} confirmed cases, ${statesTotal.deaths} deaths</span></p>
+    <table>
+    <tr><td id="stateSelTD">State:<br><select id="stateSel" size="10"></select></td><td id="countySelTD">County:<br><select id="countySel" size="10"></select></td></tr>
+    <tr><td id="countTableTD"></td><td>...</td></tr>
+    </table>
+    `
+    div.innerHTML=h
+    let stateSel=div.querySelector('#stateSel')
+    Object.keys(states).forEach(S=>{
+        let opt = document.createElement('option')
+        opt.value=S
+        opt.textContent=`${S} (${states[S].confirmed.slice(-1)[0]} cases, ${states[S].deaths.slice(-1)[0]} deaths)`
+        stateSel.appendChild(opt)
+        //debugger
+    })
+    stateSel.onchange=function(evt){
+        st = this.childNodes[this.selectedIndex].value // state selected
+        let countySel = div.querySelector('#countySel')
+        countySel.innerHTML='' // clear
+        Object.keys(states[st].county).forEach(ct=>{
+            let C = states[st].county[ct]
+            let opt = document.createElement('option')
+            opt.value=ct
+            opt.textContent=`${ct} (${C.confirmed.slice(-1)[0]} cases, ${C.deaths.slice(-1)[0]} deaths)`
+            countySel.appendChild(opt)
+        })
+        // tabulate state time series
+        let countTableTD = div.querySelector('#countTableTD')
+        h = `${st}: Pop ${states[st].Population}<br><span style="font-size:small">${states[st].confirmed.slice(-1)[0]} cases,  ${states[st].deaths.slice(-1)[0]} deaths</span>`
+        h +=`<table id="countTable">`
+        h +=`<tr><th>Date</th><th style="color:green">Confirmed</th><th style="color:red">Deaths</th></tr>`
+        let n = states[st].dates.length
+        states[st].dates.sort((a,b)=>{
+            if(a<b){return 1} // invert dates
+            else{return -1}
+        }).forEach((d,ii)=>{
+            i=n-ii
+            h+=`<tr><td>${d.toString().slice(4,15)}</td><td style="color:green" align="right">${states[st].confirmed[i]}</td><td style="color:red" align="right">${states[st].deaths[i]}</td></tr>`
+        })
+        h +=`</table>`
+        countTableTD.innerHTML=h
+        //debugger
+    }
+    //debugger
+}
 
 
 if(typeof(define)!='undefined'){
     define(corona)
 }
+
 
 
 
