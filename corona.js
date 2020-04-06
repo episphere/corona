@@ -715,6 +715,7 @@ corona.UStable=async (div='coronaUStableDiv')=>{
         plotlyDiv.innerHTML='<p>&nbsp;</p><p>&nbsp;</p><p>&nbsp;</p>Not enough data <br>for progression plot' // clear
         if(states[st].deaths.slice(-1)[0]>10){
             plotlyDiv.innerHTML='' // clear plot div
+            let period=7
             let trace={
                 type: 'scatter',
                 mode: 'lines+markers',
@@ -722,9 +723,12 @@ corona.UStable=async (div='coronaUStableDiv')=>{
                     color: 'cider',
                     size: 5,
                 },
-                x:states[st].deaths.slice(7),
-                y:states[st].confirmed.slice(7).map((x,i)=>100*(x-states[st].confirmed[i])/x),
-                text:states[st].dates.map(x=>x.toString().slice(4,15))
+                x:states[st].deaths.slice(period),
+                y:states[st].confirmed.slice(period).map((x,i)=>100*(x-states[st].confirmed[i])/x),
+                text:states[st].dates.sort((a,b)=>{
+                    if(a>b){return 1}
+                    else{return -1}
+                }).slice(period).map(x=>x.toString().slice(4,15))
             }
             Plotly.newPlot(plotlyDiv,[trace],{
               xaxis: {
