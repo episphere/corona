@@ -273,6 +273,7 @@ corona.progression=async()=>{
             })
         }
     });
+    corona.series.countryProgression=countries
     return countries
 }
 
@@ -657,6 +658,9 @@ corona.UStable=async (div='coronaUStableDiv')=>{
         confirmed:0,
         deaths:0
     }
+    if(!corona.series.countryProgression){
+        await corona.progression() // corona.series.countryProgression will be populated aoutomatically
+    }
     Object.entries(states).map(x=>x[1]).forEach(S=>{
         statesTotal.Population+=S.Population
         statesTotal.confirmed+=S.confirmed.slice(-1)[0]
@@ -686,6 +690,7 @@ corona.UStable=async (div='coronaUStableDiv')=>{
     })
     stateSel.onchange=function(evt){
         st = this.childNodes[this.selectedIndex].value // state selected
+
         let countySel = div.querySelector('#countySel')
         countySel.innerHTML='' // clear
         Object.keys(states[st].county).forEach(ct=>{
@@ -697,7 +702,7 @@ corona.UStable=async (div='coronaUStableDiv')=>{
         })
         // tabulate state time series
         let countTableTD = div.querySelector('#countTableTD')
-        h = `${st}: Pop ${states[st].Population}<br><span style="font-size:small">${states[st].confirmed.slice(-1)[0]} cases,  ${states[st].deaths.slice(-1)[0]} deaths</span>`
+        h = `<span style="color:black">${st}: Pop. ${states[st].Population}</span>`
         h +=`<table id="countTable">`
         h +=`<tr><th>Date</th><th style="color:green">Confirmed</th><th style="color:red">Deaths</th></tr>`
         let n = states[st].dates.length
@@ -711,17 +716,48 @@ corona.UStable=async (div='coronaUStableDiv')=>{
         h +=`</table>`
         countTableTD.innerHTML=h
         // Plotly
+        // prepare reference traces
+        let period=7
+        let Italy=corona.series.countryProgression['Italy']
+        let US=corona.series.countryProgression['US']
+        let traceItaly = {
+            name:'Italy',
+            type: 'scatter',
+            mode: 'lines+markers',
+            marker: {
+                color: 'silver',
+                size: 5,
+            },
+            x:Italy.deaths.slice(period),
+            y:Italy.confirmed.slice(period).map((x,i)=>100*(x-Italy.confirmed[i])/x),
+            text:Italy.times.slice(period)
+        }
+        let traceUS = {
+            name:'USA',
+            type: 'scatter',
+            mode: 'lines+markers',
+            marker: {
+                color: 'gray',
+                size: 5,
+            },
+            x:US.deaths.slice(period),
+            y:US.confirmed.slice(period).map((x,i)=>100*(x-US.confirmed[i])/x),
+            text:US.times.slice(period)
+        }
+
+        //
         let plotlyDiv = div.querySelector('#plotlyProgressionDiv')
         plotlyDiv.innerHTML='<p>&nbsp;</p><p>&nbsp;</p><p>&nbsp;</p>Not enough data <br>for progression plot' // clear
         if(states[st].deaths.slice(-1)[0]>10){
             plotlyDiv.innerHTML='' // clear plot div
-            let period=7
             let trace={
+                name:st,
                 type: 'scatter',
                 mode: 'lines+markers',
                 marker: {
-                    color: 'cider',
-                    size: 5,
+                    color: 'blue',
+                    size: 6,
+                    line:{width:1}
                 },
                 x:states[st].deaths.slice(period),
                 y:states[st].confirmed.slice(period).map((x,i)=>100*(x-states[st].confirmed[i])/x),
@@ -730,18 +766,22 @@ corona.UStable=async (div='coronaUStableDiv')=>{
                     else{return -1}
                 }).slice(period).map(x=>x.toString().slice(4,15))
             }
-            Plotly.newPlot(plotlyDiv,[trace],{
+            Plotly.newPlot(plotlyDiv,[traceItaly,traceUS,trace],{
               xaxis: {
                 title: 'deaths',
                 type: 'log',
-                range: [1, Math.ceil(Math.log10(states[st].deaths.slice(-1)[0]))]
+                //range: [1, Math.ceil(Math.log10(states[st].deaths.slice(-1)[0]))],
+                range: [1, 5]
               },
               yaxis: {
                 title: '# past week cases as % of total',
                 range: [0,100]
                 //type: 'log'
               },
-              title:st
+              title:`${st}<br><span style="font-size:small">[total USA and Italy values for reference]</span>`,
+              height: 550,
+              width: 400,
+              legend: { traceorder: 'reversed' }
             })
         }
         //countySel.innerHTML='' // clear
