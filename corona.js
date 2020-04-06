@@ -672,7 +672,7 @@ corona.UStable=async (div='coronaUStableDiv')=>{
     <p style="color:maroon">${new Date}<br><span style="color:navy">Population ${statesTotal.Population}, with ${statesTotal.confirmed} confirmed cases, ${statesTotal.deaths} deaths</span></p>
     <table>
     <tr><td id="stateSelTD">State:<br><select id="stateSel" size="10"></select></td><td id="countySelTD">County:<br><select id="countySel" size="10"></select></td></tr>
-    <tr><td id="countTableTD"></td><td>...</td></tr>
+    <tr><td id="countTableTD"></td><td id="plotlyTD" style="vertical-align:top"><div id="plotlyProgressionDiv">plotly</div></td></tr>
     </table>
     `
     div.innerHTML=h
@@ -705,11 +705,44 @@ corona.UStable=async (div='coronaUStableDiv')=>{
             if(a<b){return 1} // invert dates
             else{return -1}
         }).forEach((d,ii)=>{
-            i=n-ii
+            i=n-ii-1
             h+=`<tr><td>${d.toString().slice(4,15)}</td><td style="color:green" align="right">${states[st].confirmed[i]}</td><td style="color:red" align="right">${states[st].deaths[i]}</td></tr>`
         })
         h +=`</table>`
         countTableTD.innerHTML=h
+        // Plotly
+        let plotlyDiv = div.querySelector('#plotlyProgressionDiv')
+        plotlyDiv.innerHTML='<p>&nbsp;</p><p>&nbsp;</p><p>&nbsp;</p>Not enough data <br>for progression plot' // clear
+        if(states[st].deaths.slice(-1)[0]>10){
+            plotlyDiv.innerHTML='' // clear plot div
+            let trace={
+                type: 'scatter',
+                mode: 'lines+markers',
+                marker: {
+                    color: 'cider',
+                    size: 5,
+                },
+                x:states[st].deaths.slice(7),
+                y:states[st].confirmed.slice(7).map((x,i)=>100*(x-states[st].confirmed[i])/x),
+                text:states[st].dates.map(x=>x.toString().slice(4,15))
+            }
+            Plotly.newPlot(plotlyDiv,[trace],{
+              xaxis: {
+                title: 'deaths',
+                type: 'log',
+                range: [1, Math.ceil(Math.log10(states[st].deaths.slice(-1)[0]))]
+              },
+              yaxis: {
+                title: '# past week cases as % of total',
+                range: [0,100]
+                //type: 'log'
+              },
+              title:st
+            })
+        }
+        //countySel.innerHTML='' // clear
+        // on select county
+        countySel.onchange=_=>{}
         //debugger
     }
     //debugger
