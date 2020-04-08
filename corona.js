@@ -690,7 +690,7 @@ corona.UStable=async (div='coronaUStableDiv')=>{
     })
     stateSel.onchange=function(evt){
         st = this.childNodes[this.selectedIndex].value // state selected
-
+        localStorage.UStableSelectedState=st
         let countySel = div.querySelector('#countySel')
         countySel.innerHTML='' // clear
         Object.keys(states[st].county).forEach(ct=>{
@@ -788,7 +788,13 @@ corona.UStable=async (div='coronaUStableDiv')=>{
         // on select county
         countySel.onchange=_=>{}
         //debugger
+        
     }
+   setTimeout(_=>{
+        let selectState = localStorage.UStableSelectedState||'New York'
+        Object.entries(stateSel).map(x=>x[1]).filter(x=>x.value==selectState)[0].selected=true
+        stateSel.onchange()
+    },1000)
     //debugger
 }
 
