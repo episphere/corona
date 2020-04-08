@@ -688,7 +688,7 @@ corona.UStable=async (div='coronaUStableDiv')=>{
         stateSel.appendChild(opt)
         //debugger
     })
-    stateSel.onchange=function(evt){
+    stateSel.onclick=function(evt){
         st = this.childNodes[this.selectedIndex].value // state selected
         localStorage.UStableSelectedState=st
         let countySel = div.querySelector('#countySel')
@@ -804,7 +804,45 @@ corona.UStable=async (div='coronaUStableDiv')=>{
             })
             h +=`</table>`
             countTableTD.innerHTML=h
-            //debugger
+            // Plotly
+            let plotlyDiv = div.querySelector('#plotlyProgressionDiv')
+            plotlyDiv.innerHTML='<p>&nbsp;</p><p>&nbsp;</p><p>&nbsp;</p>Not enough data <br>for progression plot' // clear
+            if(states[st].deaths.slice(-1)[0]>10){
+                plotlyDiv.innerHTML='' // clear plot div
+                let trace={
+                    name:ct,
+                    type: 'scatter',
+                    mode: 'lines+markers',
+                    marker: {
+                        color: 'blue',
+                        size: 6,
+                        line:{width:1}
+                    },
+                    x:C.deaths.slice(period),
+                    y:C.confirmed.slice(period).map((x,i)=>100*(x-C.confirmed[i])/x),
+                    text:C.dates.sort((a,b)=>{
+                        if(a>b){return 1}
+                        else{return -1}
+                    }).slice(period).map(x=>x.toString().slice(4,15))
+                }
+                Plotly.newPlot(plotlyDiv,[traceItaly,traceUS,trace],{
+                  xaxis: {
+                    title: 'deaths',
+                    type: 'log',
+                    //range: [1, Math.ceil(Math.log10(states[st].deaths.slice(-1)[0]))],
+                    range: [1, 5]
+                  },
+                  yaxis: {
+                    title: '# past week cases as % of total',
+                    range: [0,100]
+                    //type: 'log'
+                  },
+                  title:`${ct}, ${st}<br><span style="font-size:small">[total USA and Italy values for reference]</span>`,
+                  height: 550,
+                  width: 400,
+                  legend: { traceorder: 'reversed' }
+                })
+            }
         }
         //debugger
         
@@ -812,7 +850,7 @@ corona.UStable=async (div='coronaUStableDiv')=>{
    setTimeout(_=>{
         let selectState = localStorage.UStableSelectedState||'New York'
         Object.entries(stateSel).map(x=>x[1]).filter(x=>x.value==selectState)[0].selected=true
-        stateSel.onchange()
+        stateSel.onclick()
     },1000)
     //debugger
 }
