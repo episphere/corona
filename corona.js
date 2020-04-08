@@ -786,7 +786,26 @@ corona.UStable=async (div='coronaUStableDiv')=>{
         }
         //countySel.innerHTML='' // clear
         // on select county
-        countySel.onchange=_=>{}
+        countySel.onchange=_=>{
+            let ct=countySel.options[countySel.selectedIndex].value
+            let st=stateSel.options[stateSel.selectedIndex].value
+            let C=states[st].county[ct]
+            let countTableTD = div.querySelector('#countTableTD')
+            h = `<span style="color:black">${ct}, ${st}: Pop. ${C.Population}</span>`
+            h +=`<table id="countTable">`
+            h +=`<tr><th>Date</th><th style="color:green">Confirmed</th><th style="color:red">Deaths</th></tr>`
+            let n = C.dates.length
+            C.dates.sort((a,b)=>{
+                if(a<b){return 1} // invert dates
+                else{return -1}
+            }).forEach((d,ii)=>{
+                i=n-ii-1
+                h+=`<tr><td>${d.toString().slice(4,15)}</td><td style="color:green" align="right">${C.confirmed[i]}</td><td style="color:red" align="right">${C.deaths[i]}</td></tr>`
+            })
+            h +=`</table>`
+            countTableTD.innerHTML=h
+            //debugger
+        }
         //debugger
         
     }
