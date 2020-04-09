@@ -688,7 +688,7 @@ corona.UStable=async (div='coronaUStableDiv')=>{
         stateSel.appendChild(opt)
         //debugger
     })
-    stateSel.onclick=function(evt){
+    stateSel.onclick=stateSel.onchange=function(evt){
         st = this.childNodes[this.selectedIndex].value // state selected
         localStorage.UStableSelectedState=st
         let countySel = div.querySelector('#countySel')
