@@ -872,14 +872,23 @@ corona.UStable=async (div='coronaUStableDiv')=>{
 }
 
 corona.UStablePlot=(plotlyDiv,title='')=>{
+    // remove repeats
+    let lastName=corona.UStable.traces.slice(-1)[0].name
+    let repeats=[]
+    corona.UStable.traces.slice(0,-1).forEach((x,i)=>{
+        if(x.name==lastName){
+            corona.UStable.traces=corona.UStable.traces.slice(0,i).concat(corona.UStable.traces.slice(i+1,-1))
+        }
+    })
+    // repeats removed
     let n = corona.UStable.traces.length
     let d = 255/(n-1)
     corona.UStable.traces.forEach((_,i)=>{           
-        if(i>1){
+        if(i>1&n>3){
             let j=i-2
             let r = parseInt(j*d)
             let g = 255-r
-            let b = parseInt(Math.abs(r-g))
+            let b = parseInt(Math.abs(255-r/8-g/4))
             corona.UStable.traces[i].marker.color=`rgb(${r},${g},${b})`
             //debugger
         }  
