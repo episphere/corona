@@ -901,17 +901,22 @@ corona.UStablePlot=(plotlyDiv,title='')=>{
     //console.log(st)
     Plotly.newPlot(plotlyDiv,corona.UStable.traces,{
       xaxis: {
-        title: 'deaths',
+        title: '# deaths',
         type: 'log',
         //range: [1, Math.ceil(Math.log10(states[st].deaths.slice(-1)[0]))],
-        range: [1, 5]
+        range: [1, 5],
+        //showgrid: true,
+        //dtick:0.1
       },
       yaxis: {
         title: '# past week cases as % of total',
-        range: [0,100]
+        range: [0,100],
+        showgrid: true,
+        dtick:10
         //type: 'log'
       },
-      title:`<span style="font-size:${parseInt(7+Math.min(12,200/st.length))}px">${st}</span><br><span style="font-size:small">[${Date().slice(4,15)}, USA and Italy values for reference]</span>`,
+      //title:`<span style="font-size:${parseInt(7+Math.min(12,200/st.length))}px">${st}</span><br><span style="font-size:small">[${Date().slice(4,15)}, USA and Italy values for reference]</span>`,
+      title:`<span style="font-size:medium">Real-time COVID progression by cumulative fatalities</span><br><span style="font-size:small">[${Date().slice(4,15)}, each marker a day, USA and Italy values for ref]</span>`,
       height: 550,
       width: 550,
       legend: { traceorder: 'reversed' }
