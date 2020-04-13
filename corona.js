@@ -676,7 +676,7 @@ corona.UStable=async (div='coronaUStableDiv')=>{
     <p style="color:maroon">${new Date}<br><span style="color:navy">Population ${statesTotal.Population}, with ${statesTotal.confirmed} confirmed cases, ${statesTotal.deaths} deaths</span></p>
     <table>
     <tr><td id="stateSelTD">State:<br><select id="stateSel" size="10"></select></td><td id="countySelTD">County:<br><select id="countySel" size="10"></select></td></tr>
-    <tr><td id="countTableTD"></td><td id="plotlyTD" style="vertical-align:top"><div id="plotlyProgressionDiv">plotly</div></td></tr>
+    <tr><td id="countTableTD"></td><td id="plotlyTD" style="vertical-align:top"><input type="checkbox" id="addToPlot"> add to plot<div id="plotlyProgressionDiv">plotly</div></td></tr>
     </table>
     `
     div.innerHTML=h
@@ -688,8 +688,9 @@ corona.UStable=async (div='coronaUStableDiv')=>{
         stateSel.appendChild(opt)
         //debugger
     })
-    stateSel.onclick=stateSel.onchange=function(evt){
-        st = this.childNodes[this.selectedIndex].value // state selected
+    //stateSel.onclick=
+    stateSel.onchange=function(evt){
+        let st = this.childNodes[this.selectedIndex].value // state selected
         localStorage.UStableSelectedState=st
         let countySel = div.querySelector('#countySel')
         countySel.innerHTML='' // clear
@@ -747,6 +748,7 @@ corona.UStable=async (div='coronaUStableDiv')=>{
 
         //
         let plotlyDiv = div.querySelector('#plotlyProgressionDiv')
+        
         plotlyDiv.innerHTML='<p>&nbsp;</p><p>&nbsp;</p><p>&nbsp;</p>Not enough data <br>for progression plot' // clear
         if(states[st].deaths.slice(-1)[0]>10){
             plotlyDiv.innerHTML='' // clear plot div
@@ -766,7 +768,11 @@ corona.UStable=async (div='coronaUStableDiv')=>{
                     else{return -1}
                 }).slice(period).map(x=>x.toString().slice(4,15))
             }
-            Plotly.newPlot(plotlyDiv,[traceItaly,traceUS,trace],{
+            if(!addToPlot.checked){corona.UStable.traces=[traceItaly,traceUS,trace]}
+            else{corona.UStable.traces.push(trace)}
+            corona.UStablePlot(plotlyDiv)
+            /*
+            Plotly.newPlot(plotlyDiv,corona.UStable.traces,{
               xaxis: {
                 title: 'deaths',
                 type: 'log',
@@ -783,6 +789,7 @@ corona.UStable=async (div='coronaUStableDiv')=>{
               width: 400,
               legend: { traceorder: 'reversed' }
             })
+            */
         }
         //countySel.innerHTML='' // clear
         // on select county
@@ -810,7 +817,7 @@ corona.UStable=async (div='coronaUStableDiv')=>{
             if(states[st].deaths.slice(-1)[0]>10){
                 plotlyDiv.innerHTML='' // clear plot div
                 let trace={
-                    name:ct,
+                    name:`${ct}, ${st}`,
                     type: 'scatter',
                     mode: 'lines+markers',
                     marker: {
@@ -825,6 +832,14 @@ corona.UStable=async (div='coronaUStableDiv')=>{
                         else{return -1}
                     }).slice(period).map(x=>x.toString().slice(4,15))
                 }
+                if(!addToPlot.checked){
+                    corona.UStable.traces=[traceItaly,traceUS,trace]
+                //else if(trace.name!=traces.slice(-1)){ // if it not trigetered by choice of state
+                }else{
+                    corona.UStable.traces.push(trace)
+                }
+                corona.UStablePlot(plotlyDiv)
+                /*
                 Plotly.newPlot(plotlyDiv,[traceItaly,traceUS,trace],{
                   xaxis: {
                     title: 'deaths',
@@ -842,6 +857,7 @@ corona.UStable=async (div='coronaUStableDiv')=>{
                   width: 400,
                   legend: { traceorder: 'reversed' }
                 })
+                */
             }
         }
         //debugger
@@ -850,9 +866,47 @@ corona.UStable=async (div='coronaUStableDiv')=>{
    setTimeout(_=>{
         let selectState = localStorage.UStableSelectedState||'New York'
         Object.entries(stateSel).map(x=>x[1]).filter(x=>x.value==selectState)[0].selected=true
-        stateSel.onclick()
+        stateSel.onchange()
     },1000)
     //debugger
+}
+
+corona.UStablePlot=(plotlyDiv,title='')=>{
+    let n = corona.UStable.traces.length
+    let d = 255/(n-1)
+    corona.UStable.traces.forEach((_,i)=>{           
+        if(i>1){
+            let j=i-2
+            let r = parseInt(j*d)
+            let g = 255-r
+            let b = parseInt(Math.abs(r-g))
+            corona.UStable.traces[i].marker.color=`rgb(${r},${g},${b})`
+            //debugger
+        }  
+    })
+    let st = corona.UStable.traces.map(t=>t.name).join('; ')
+    //console.log(st.length,st)
+    if(st.length>100){
+        st=st.slice(0,100)+' ...'
+    }
+    //console.log(st)
+    Plotly.newPlot(plotlyDiv,corona.UStable.traces,{
+      xaxis: {
+        title: 'deaths',
+        type: 'log',
+        //range: [1, Math.ceil(Math.log10(states[st].deaths.slice(-1)[0]))],
+        range: [1, 5]
+      },
+      yaxis: {
+        title: '# past week cases as % of total',
+        range: [0,100]
+        //type: 'log'
+      },
+      title:`<span style="font-size:${parseInt(7+Math.min(12,200/st.length))}px">${st}</span><br><span style="font-size:small">[${Date().slice(4,15)}, USA and Italy values for reference]</span>`,
+      height: 550,
+      width: 550,
+      legend: { traceorder: 'reversed' }
+    })
 }
 
 
