@@ -707,14 +707,14 @@ corona.UStable=async (div='coronaUStableDiv')=>{
         let countTableTD = div.querySelector('#countTableTD')
         h = `<span style="color:black">${st}: Pop. ${states[st].Population}</span>`
         h +=`<table id="countTable">`
-        h +=`<tr><th>Date</th><th style="color:green">Confirmed</th><th style="color:red">Deaths</th><th style="color:brown">7 day total</th></tr>`
+        h +=`<tr><th>Date</th><th style="color:green">Confirmed</th><th style="color:red">Deaths</th><th style="color:navy">7 day totals</th></tr>`
         let n = states[st].dates.length
         states[st].dates.sort((a,b)=>{
             if(a<b){return 1} // invert dates
             else{return -1}
         }).forEach((d,ii)=>{
             i=n-ii-1
-            h+=`<tr><td>${d.toString().slice(4,15)}</td><td style="color:green" align="right">${states[st].confirmed[i]}</td><td style="color:red" align="right">${states[st].deaths[i]}</td><td style="color:brown" align="right">${states[st].deaths[i]-states[st].deaths[i-7]}</td></tr>`
+            h+=`<tr><td>${d.toString().slice(4,15)}</td><td style="color:green" align="right">${states[st].confirmed[i]}</td><td style="color:red" align="right">${states[st].deaths[i]}</td><td align="right" style="font-size:small"><span style="color:green">${states[st].confirmed[i]-states[st].confirmed[i-7]}</span>,<span style="color:red">${states[st].deaths[i]-states[st].deaths[i-7]}</span></td></tr>`
         })
         h +=`</table>`
         countTableTD.innerHTML=h
@@ -804,14 +804,14 @@ corona.UStable=async (div='coronaUStableDiv')=>{
             let countTableTD = div.querySelector('#countTableTD')
             h = `<span style="color:black">${ct}, ${st}: Pop. ${C.Population}</span>`
             h +=`<table id="countTable">`
-            h +=`<tr><th>Date</th><th style="color:green">Confirmed</th><th style="color:red">Deaths</th><th style="color:brown">7 day total</th></tr>`
+            h +=`<tr><th>Date</th><th style="color:green">Confirmed</th><th style="color:red">Deaths</th><th style="color:navy">7 day totals</th></tr>`
             let n = C.dates.length
             C.dates.sort((a,b)=>{
                 if(a<b){return 1} // invert dates
                 else{return -1}
             }).forEach((d,ii)=>{
                 i=n-ii-1
-                h+=`<tr><td>${d.toString().slice(4,15)}</td><td style="color:green" align="right">${C.confirmed[i]}</td><td style="color:red" align="right">${C.deaths[i]}</td><td style="color:brown" align="right">${C.deaths[i]-C.deaths[i-7]}</td></tr>`
+                h+=`<tr><td>${d.toString().slice(4,15)}</td><td style="color:green" align="right">${C.confirmed[i]}</td><td style="color:red" align="right">${C.deaths[i]}</td><td align="right" style="font-size:small"><span style="color:green">${C.confirmed[i]-C.confirmed[i-7]}</span>,<span style="color:red">${C.deaths[i]-C.deaths[i-7]}</span></td></tr>`
                 //h+=`<tr><td>${d.toString().slice(4,15)}</td><td style="color:green" align="right">${states[st].confirmed[i]}</td><td style="color:red" align="right">${states[st].deaths[i]}</td><td style="color:brown" align="right">${states[st].deaths[i]-states[st].deaths[i-7]}</td></tr>`
             })
             h +=`</table>`
