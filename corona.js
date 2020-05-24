@@ -678,7 +678,7 @@ corona.UStable=async (div='coronaUStableDiv')=>{
     <p style="color:maroon">${new Date}<br><span style="color:navy">Population ${statesTotal.Population}, with ${statesTotal.confirmed} confirmed cases, ${statesTotal.deaths} deaths</span></p>
     <table>
     <tr><td id="stateSelTD">State:<br><select id="stateSel" size="10"></select></td><td id="countySelTD">County:<br><select id="countySel" size="10"></select></td></tr>
-    <tr><td id="countTableTD"></td><td id="plotlyTD" style="vertical-align:top"><input type="checkbox" id="addToPlot"> add to plot<div id="plotlyProgressionDiv">plotly</div></td></tr>
+    <tr><td id="countTableTD"></td><td id="plotlyTD" style="vertical-align:top"><input type="checkbox" id="addToPlot"> add to plot<div id="plotlyCovidTimeSeriesDiv"></div><div id="plotlyProgressionDiv"><span style="color:red">loading ...</span></div></td></tr>
     </table>
     `
     div.innerHTML=h
@@ -707,14 +707,14 @@ corona.UStable=async (div='coronaUStableDiv')=>{
         let countTableTD = div.querySelector('#countTableTD')
         h = `<span style="color:black">${st}: Pop. ${states[st].Population}</span>`
         h +=`<table id="countTable">`
-        h +=`<tr><th>Date</th><th style="color:green">Confirmed</th><th style="color:red">Deaths</th></tr>`
+        h +=`<tr><th>Date</th><th style="color:green">Confirmed</th><th style="color:red">Deaths</th><th style="color:brown">7 day total</th></tr>`
         let n = states[st].dates.length
         states[st].dates.sort((a,b)=>{
             if(a<b){return 1} // invert dates
             else{return -1}
         }).forEach((d,ii)=>{
             i=n-ii-1
-            h+=`<tr><td>${d.toString().slice(4,15)}</td><td style="color:green" align="right">${states[st].confirmed[i]}</td><td style="color:red" align="right">${states[st].deaths[i]}</td></tr>`
+            h+=`<tr><td>${d.toString().slice(4,15)}</td><td style="color:green" align="right">${states[st].confirmed[i]}</td><td style="color:red" align="right">${states[st].deaths[i]}</td><td style="color:brown" align="right">${states[st].deaths[i]-states[st].deaths[i-7]}</td></tr>`
         })
         h +=`</table>`
         countTableTD.innerHTML=h
@@ -773,6 +773,7 @@ corona.UStable=async (div='coronaUStableDiv')=>{
             if(!addToPlot.checked){corona.UStable.traces=[traceItaly,traceUS,trace]}
             else{corona.UStable.traces.push(trace)}
             corona.UStablePlot(plotlyDiv)
+            corona.UStableSeriesPlot()
             /*
             Plotly.newPlot(plotlyDiv,corona.UStable.traces,{
               xaxis: {
@@ -793,6 +794,7 @@ corona.UStable=async (div='coronaUStableDiv')=>{
             })
             */
         }
+
         //countySel.innerHTML='' // clear
         // on select county
         countySel.onchange=_=>{
@@ -802,14 +804,14 @@ corona.UStable=async (div='coronaUStableDiv')=>{
             let countTableTD = div.querySelector('#countTableTD')
             h = `<span style="color:black">${ct}, ${st}: Pop. ${C.Population}</span>`
             h +=`<table id="countTable">`
-            h +=`<tr><th>Date</th><th style="color:green">Confirmed</th><th style="color:red">Deaths</th></tr>`
+            h +=`<tr><th>Date</th><th style="color:green">Confirmed</th><th style="color:red">Deaths</th><th style="color:brown">7 day total</th></tr>`
             let n = C.dates.length
             C.dates.sort((a,b)=>{
                 if(a<b){return 1} // invert dates
                 else{return -1}
             }).forEach((d,ii)=>{
                 i=n-ii-1
-                h+=`<tr><td>${d.toString().slice(4,15)}</td><td style="color:green" align="right">${C.confirmed[i]}</td><td style="color:red" align="right">${C.deaths[i]}</td></tr>`
+                h+=`<tr><td>${d.toString().slice(4,15)}</td><td style="color:green" align="right">${states[st].confirmed[i]}</td><td style="color:red" align="right">${states[st].deaths[i]}</td><td style="color:brown" align="right">${states[st].deaths[i]-states[st].deaths[i-7]}</td></tr>`
             })
             h +=`</table>`
             countTableTD.innerHTML=h
@@ -841,6 +843,7 @@ corona.UStable=async (div='coronaUStableDiv')=>{
                     corona.UStable.traces.push(trace)
                 }
                 corona.UStablePlot(plotlyDiv)
+                corona.UStableSeriesPlot()
                 /*
                 Plotly.newPlot(plotlyDiv,[traceItaly,traceUS,trace],{
                   xaxis: {
@@ -924,6 +927,61 @@ corona.UStablePlot=(plotlyDiv,title='')=>{
       legend: { traceorder: 'reversed' }
     })
 }
+
+corona.UStableSeriesPlot=(div="plotlyCovidTimeSeriesDiv")=>{
+    let traces = []
+    corona.UStable.traces.slice(2).map(t=>{ // distribution area
+        let trace={
+            name:t.name,
+            x:t.text.map(d=>new Date(d)).slice(7),
+            y:t.x.slice(7).map((xi,i)=>xi-t.x[i-7]),
+            marker:t.marker,
+            mode: "lines",
+            fill: 'tozeroy'
+        }
+        traces.push(trace)
+    })
+    corona.UStable.traces.slice(2).map(t=>{ // cumulative trave 
+        let trace={
+            name:t.name,
+            x:t.text.map(d=>new Date(d)),
+            y:t.x,
+            marker:t.marker,
+            mode: "lines+markers",
+            yaxis: 'y2'
+        }
+        traces.push(trace)
+    })
+
+    //debugger
+    Plotly.newPlot(div,traces,{
+        title:`COVID19 mortality<span style="font-size:small">, retrieved ${(new Date).toDateString().slice(4)}</span>`,
+        height: 550,
+        width: 550,
+        legend: { 
+            traceorder: 'reversed',
+            x:0,
+            y:1
+        },
+        yaxis: {
+            title: '7 day totals (area)',
+            //type: 'log',
+        },
+        xaxis: {
+            title: 'date'
+        },
+        yaxis2: {
+            title: 'Total count (o)',
+            titlefont: {color: 'rgb(148, 103, 189)'},
+            tickfont: {color: 'rgb(148, 103, 189)'},
+            overlaying: 'y',
+            side: 'right',
+            type: 'log'
+        }
+        
+    })
+}
+
 
 
 if(typeof(define)!='undefined'){
