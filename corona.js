@@ -811,7 +811,8 @@ corona.UStable=async (div='coronaUStableDiv')=>{
                 else{return -1}
             }).forEach((d,ii)=>{
                 i=n-ii-1
-                h+=`<tr><td>${d.toString().slice(4,15)}</td><td style="color:green" align="right">${states[st].confirmed[i]}</td><td style="color:red" align="right">${states[st].deaths[i]}</td><td style="color:brown" align="right">${states[st].deaths[i]-states[st].deaths[i-7]}</td></tr>`
+                h+=`<tr><td>${d.toString().slice(4,15)}</td><td style="color:green" align="right">${C.confirmed[i]}</td><td style="color:red" align="right">${C.deaths[i]}</td><td style="color:brown" align="right">${C.deaths[i]-C.deaths[i-7]}</td></tr>`
+                //h+=`<tr><td>${d.toString().slice(4,15)}</td><td style="color:green" align="right">${states[st].confirmed[i]}</td><td style="color:red" align="right">${states[st].deaths[i]}</td><td style="color:brown" align="right">${states[st].deaths[i]-states[st].deaths[i-7]}</td></tr>`
             })
             h +=`</table>`
             countTableTD.innerHTML=h
@@ -971,9 +972,9 @@ corona.UStableSeriesPlot=(div="plotlyCovidTimeSeriesDiv")=>{
             title: 'date'
         },
         yaxis2: {
-            title: 'Total count (o)',
-            titlefont: {color: 'rgb(148, 103, 189)'},
-            tickfont: {color: 'rgb(148, 103, 189)'},
+            title: 'Total count (<span style="font-size:large">&#9679;</span>)',
+            //titlefont: {color: 'rgb(148, 103, 189)'},
+            //tickfont: {color: 'rgb(148, 103, 189)'},
             overlaying: 'y',
             side: 'right',
             type: 'log'
