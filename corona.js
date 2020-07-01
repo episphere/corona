@@ -364,7 +364,13 @@ corona.byState=(xx)=>{ // could be xx = await corona.getUSA()
                     return v+states[S].county[C].deaths[i]
                 })
                 states[S].confirmed=states[S].confirmed.map((v,i)=>{
-                    return v+states[S].county[C].confirmed[i]
+                    if(states[S].county[C].confirmed){
+                        return v+states[S].county[C].confirmed[i]
+                    }else{
+                        console.log('check data from ',[S,C,v,i])
+                        return 0
+                    }
+                    
                 })
             }
         })
