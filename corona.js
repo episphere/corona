@@ -706,7 +706,13 @@ corona.UStable=async (div='coronaUStableDiv')=>{
             let C = states[st].county[ct]
             let opt = document.createElement('option')
             opt.value=ct
-            opt.textContent=`${ct} (${C.confirmed.slice(-1)[0]} cases, ${C.deaths.slice(-1)[0]} deaths)`
+            if(C.confirmed){
+                opt.textContent=`${ct} (${C.confirmed.slice(-1)[0]} cases, ${C.deaths.slice(-1)[0]} deaths)`
+            }else{
+                console.log('missing data from '+C.Combined_Key)
+                opt.textContent='missing data from '+C.Combined_Key
+            }
+            
             countySel.appendChild(opt)
         })
         // tabulate state time series
