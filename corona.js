@@ -279,8 +279,8 @@ corona.progression=async()=>{
 
 corona.getUSA=async()=>{
     // deaths
-    //let urlDeaths=`https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_deaths_US.csv`
-    let urlDeaths='https://script.google.com/macros/s/AKfycbzD9rtrlH0N-ZLXpdFa94hMQlYyF0CCvQdpVvW6IUDZtHncFAs/exec'
+    let urlDeaths=`https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_deaths_US.csv`
+    //let urlDeaths='https://script.google.com/macros/s/AKfycbzD9rtrlH0N-ZLXpdFa94hMQlYyF0CCvQdpVvW6IUDZtHncFAs/exec'
     let txt = await (await fetch(urlDeaths)).text()
     txt=txt.replace(/\"[^"]+"/g,encodeURIComponent)
     let arr = txt.split(/[\n\r]+/).map(r=>r.split(','))
@@ -288,8 +288,8 @@ corona.getUSA=async()=>{
     let k = arr[0].indexOf('1/22/20')
     let labels=arr[0].slice(0,k)
     // confirmed
-    //let urlConfirmed=`https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_confirmed_US.csv`
-    let urlConfirmed='https://script.google.com/macros/s/AKfycbznX1VCdhXwTfk9zW6bLqaZya9abUOHuGrmNwdu_KaKfYvtVDs/exec'
+    let urlConfirmed=`https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_confirmed_US.csv`
+    //let urlConfirmed='https://script.google.com/macros/s/AKfycbznX1VCdhXwTfk9zW6bLqaZya9abUOHuGrmNwdu_KaKfYvtVDs/exec'
     let txtConfirmed = await (await fetch(urlConfirmed)).text()
     txtConfirmed=txtConfirmed.replace(/\"[^"]+"/g,encodeURIComponent)
     let arrConfirmed = txtConfirmed.split(/[\n\r]+/).map(r=>r.split(','))
